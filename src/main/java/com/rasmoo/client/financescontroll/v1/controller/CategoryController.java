@@ -72,8 +72,8 @@ public class CategoryController {
 		Response<Category> response = new Response<>();
 		try {
 			if (categoria != null && categoria.getId() != null) {
-				Optional<Category> catogory = this.categoryRepository.findById(categoria.getId());
-				if (catogory.isPresent()) {
+				Optional<Category> category = this.categoryRepository.findById(categoria.getId());
+				if (category.isPresent()) {
 					response.setData(this.categoryRepository.save(mapper.map(categoria, Category.class)));
 					response.setStatusCode(HttpStatus.OK.value());
 					return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -107,9 +107,9 @@ public class CategoryController {
 	public ResponseEntity<Response<Category>> consultarCategoria(@PathVariable Long id) {
 		Response<Category> response = new Response<>();
 		try {
-			Optional<Category> catogory = this.categoryRepository.findById(id);
-			if (catogory.isPresent()) {
-				response.setData(catogory.get());
+			Optional<Category> category = this.categoryRepository.findById(id);
+			if (category.isPresent()) {
+				response.setData(category.get());
 			}
 			response.setStatusCode(HttpStatus.OK.value());
 			return ResponseEntity.status(HttpStatus.OK).body(response);
