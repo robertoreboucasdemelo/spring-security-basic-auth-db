@@ -42,18 +42,11 @@ public class CategoryController {
 		Response<Category> response = new Response<>();
 		try {
 			
-			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-			
-			Optional<User> usuario = this.userRepository.findByEmail(auth.getName());
-			
-			if(!usuario.isPresent()) {
-				throw new Exception();
-			}
-			
-			
+			User usuario = this.findAuthUser();
+				
 			if (categoria != null && categoria.getId() == null) {
 				Category categoriaEntity = mapper.map(categoria, Category.class);
-				categoriaEntity.setUser(usuario.get());
+				categoriaEntity.setUser(usuario);
 				response.setData(this.categoryRepository.save(categoriaEntity));
 				response.setStatusCode(HttpStatus.CREATED.value());
 				return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -67,15 +60,21 @@ public class CategoryController {
 
 	}
 
+
 	@PutMapping
 	public ResponseEntity<Response<Category>> atualizarCategoria(@RequestBody CategoryDTO categoria) {
 		Response<Category> response = new Response<>();
 		try {
 			if (categoria != null && categoria.getId() != null) {
+				
+				User usuario = this.findAuthUser();
+				
 				Optional<Category> category = this.categoryRepository.findById(categoria.getId());
-				if (category.isPresent()) {
-					response.setData(this.categoryRepository.save(mapper.map(categoria, Category.class)));
-					response.setStatusCode(HttpStatus.OK.value());
+				if (category.isPresent() && category.get().getUser().getId() == usuario.getId()) {
+					Category categoriaEntity = mapper.map(categoria, Category.class);
+					categoriaEntity.setUser(usuario);
+					response.setData(this.categoryRepository.save(categoriaEntity));
+					response.setStatusCode(HttpStatus.CREATED.value());
 					return ResponseEntity.status(HttpStatus.OK).body(response);
 				}
 			}
@@ -92,7 +91,8 @@ public class CategoryController {
 	public ResponseEntity<Response<List<Category>>> listarCategorias() {
 		Response<List<Category>> response = new Response<>();
 		try {
-			response.setData(this.categoryRepository.findAll());
+			User usuario = this.findAuthUser();
+			response.setData(this.categoryRepository.findAllByUserId(usuario.getId()));
 			response.setStatusCode(HttpStatus.OK.value());
 			return ResponseEntity.status(HttpStatus.OK).body(response);
 		} catch (Exception e) {
@@ -137,6 +137,17 @@ public class CategoryController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 		}
 
+	}
+	
+	private User findAuthUser() throws Exception {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		
+		Optional<User> usuario = this.userRepository.findByEmail(auth.getName());
+		
+		if(!usuario.isPresent()) {
+			throw new Exception();
+		}
+		return usuario.get();
 	}
 
 }
